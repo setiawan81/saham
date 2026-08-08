@@ -5,6 +5,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 from utils.analysis import (
     fetch_ihsg, fetch_ohlcv, add_indicators, compute_signal,
@@ -19,6 +20,16 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 inject_css()
+
+components.html("""
+<script src="https://www.googletagmanager.com/gtag/js?id=G-BKLEQBB11T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BKLEQBB11T');
+</script>
+""", height=0)
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
