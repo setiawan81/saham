@@ -174,6 +174,8 @@ def make_portfolio_pie(labels, values, colors) -> go.Figure:
         textfont=dict(size=11),
         hovertemplate="<b>%{label}</b><br>%{percent}<extra></extra>",
     ))
-    fig.update_layout(**BASE_LAYOUT, height=260, showlegend=True,
-                      legend=dict(x=1.02, y=0.5, orientation="v"))
+    fig.update_layout(**{**BASE_LAYOUT,
+                        "legend": dict(x=1.02, y=0.5, orientation="v",
+                                       font_size=10, bgcolor="rgba(0,0,0,0)")},
+                       height=260, showlegend=True)
     return fig
