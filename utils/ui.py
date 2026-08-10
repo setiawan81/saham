@@ -162,7 +162,7 @@ def risk_box(risk: int, atr_pct: float):
     seg_cols = ["#10b981","#34d399","#86efac","#fbbf24","#fb923c","#f97316","#ef4444","#dc2626","#b91c1c","#7f1d1d"]
     lbl  = "RENDAH" if risk<=3 else ("SEDANG" if risk<=6 else ("TINGGI" if risk<=8 else "SANGAT TINGGI"))
     col  = "#00d395" if risk<=3 else ("#feb624" if risk<=6 else ("#f97316" if risk<=8 else "#ff4560"))
-    segs = "".join([f'<div class="risk-seg" style="background:{"'+seg_cols[i]+'" if i<risk else "rgba(45,53,97,.4)"}"></div>' for i in range(10)])
+    segs = "".join([f'<div class="risk-seg" style="background:{seg_cols[i] if i < risk else "rgba(45,53,97,.4)"}"></div>' for i in range(10)])
     st.markdown(f"""
     <div class="card">
       <div class="card-title">⚠️ Risk Meter</div>

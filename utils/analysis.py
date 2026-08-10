@@ -76,7 +76,7 @@ def fetch_dividends(code: str) -> pd.DataFrame:
             return pd.DataFrame()
         df = divs.reset_index()
         df.columns = ["date", "dividend"]
-        df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
+        df["date"] = pd.to_datetime(df["date"]).dt.tz_convert(None)
         return df.sort_values("date", ascending=False).reset_index(drop=True)
     except Exception:
         return pd.DataFrame()
@@ -176,7 +176,7 @@ def compute_signal(df: pd.DataFrame) -> dict:
     hi52  = float(df["high"].iloc[-252:].max())  if len(df) >= 252 else float(df["high"].max())
     lo52  = float(df["low"].iloc[-252:].min())   if len(df) >= 252 else float(df["low"].min())
     pct52 = int((price - lo52) / (hi52 - lo52) * 100) if hi52 > lo52 else 50
-    risk  = min(10, int(atr_pct * 1.8 + (2 if rsi > 70 else (-1 if rsi < 30 else 0))))
+    risk  = max(1, min(10, int(atr_pct * 1.8 + (2 if rsi > 70 else (-1 if rsi < 30 else 0)))))
 
     return dict(signal=signal, score=total, confidence=confidence, scores=sc,
                 price=price, tp=tp, sl=sl, rr=rr, rsi=rsi, atr_pct=round(atr_pct,2),

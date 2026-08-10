@@ -87,7 +87,6 @@ with col2:
 with col3:
     st.metric("🎓 Saham Mahasiswa", f"{total_mahasiswa} saham", "GOTO · ANTM · WTON")
 with col4:
-    mkt_msg, is_open = market_status()
     st.metric("🕐 Status Pasar", "BUKA" if is_open else "TUTUP", mkt_msg)
 
 st.markdown("---")
