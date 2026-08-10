@@ -3,6 +3,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import streamlit as st
 import pandas as pd
+import json
 from utils.analysis import ALL_STOCKS, fetch_ohlcv, add_indicators, compute_signal, signal_emoji
 from utils.charts import make_portfolio_pie
 from utils.ui import inject_css
@@ -56,6 +57,44 @@ if st.session_state.portfolio:
             indices = [remove_labels.index(r) for r in to_remove]
             st.session_state.portfolio = [p for i, p in enumerate(st.session_state.portfolio) if i not in indices]
             st.rerun()
+
+# ── EXPORT / IMPORT PORTFOLIO ─────────────────────────────────────────────────
+with st.expander("💾 Simpan / Muat Portfolio", expanded=False):
+    st.caption("Export portfolio ke file JSON agar bisa di-load kembali setelah refresh.")
+    exp_col, imp_col = st.columns(2)
+    with exp_col:
+        st.markdown("**📤 Export**")
+        if st.session_state.portfolio:
+            json_str = json.dumps(st.session_state.portfolio, indent=2, ensure_ascii=False)
+            st.download_button(
+                label="⬇️ Download Portfolio JSON",
+                data=json_str,
+                file_name="stockvision_portfolio.json",
+                mime="application/json",
+                use_container_width=True,
+            )
+        else:
+            st.info("Portfolio kosong, tidak ada yang di-export.")
+    with imp_col:
+        st.markdown("**📥 Import**")
+        uploaded = st.file_uploader("Upload file JSON", type=["json"], label_visibility="collapsed")
+        if uploaded is not None:
+            try:
+                data = json.loads(uploaded.read().decode("utf-8"))
+                if isinstance(data, list) and all(isinstance(p, dict) for p in data):
+                    # Validate required keys
+                    required = {"code", "buy_price", "lots", "shares"}
+                    valid = [p for p in data if required.issubset(p.keys())]
+                    if valid:
+                        st.session_state.portfolio = valid
+                        st.success(f"✅ {len(valid)} posisi berhasil di-import!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Format JSON tidak valid — field wajib: code, buy_price, lots, shares")
+                else:
+                    st.error("❌ File harus berisi JSON array of objects.")
+            except json.JSONDecodeError:
+                st.error("❌ File bukan JSON yang valid.")
 
 st.markdown("---")
 
@@ -182,4 +221,4 @@ for r in rows:
 
 # ── DISCLAIMER ────────────────────────────────────────────────────────────────
 st.markdown("---")
-st.caption("⚠️ Portfolio tracker ini menyimpan data per sesi. Data akan hilang saat halaman di-refresh. Selalu konsultasikan keputusan investasi dengan pertimbangan matang.")
+st.caption("⚠️ Data portfolio tersimpan selama sesi aktif. Gunakan fitur 💾 Simpan/Muat untuk export ke JSON agar tidak hilang saat refresh. Selalu konsultasikan keputusan investasi dengan pertimbangan matang.")

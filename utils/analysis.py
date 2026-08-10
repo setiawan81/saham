@@ -35,32 +35,63 @@ MAHASISWA = {
 
 ALL_STOCKS = {**PREMIUM, **MAHASISWA}
 
-# ── DATA FETCHING ─────────────────────────────────────────────────────────────
-@st.cache_data(ttl=300, show_spinner=False)
+# ── DATA FETCHING (with retry & rate-limit handling) ──────────────────────────
+import time as _time
+import logging as _logging
+
+_logger = _logging.getLogger(__name__)
+
+def _retry_fetch(func, max_retries=3, base_delay=1.0):
+    """Wrapper that retries Yahoo Finance calls with exponential backoff."""
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except Exception as e:
+            err_msg = str(e).lower()
+            is_rate_limit = any(kw in err_msg for kw in ["rate", "limit", "429", "too many"])
+            if attempt < max_retries - 1 and is_rate_limit:
+                delay = base_delay * (2 ** attempt)
+                _logger.warning(f"Yahoo Finance rate limited, retry {attempt+1}/{max_retries} in {delay}s")
+                _time.sleep(delay)
+            elif attempt < max_retries - 1:
+                _time.sleep(0.5)  # brief pause for transient errors
+            else:
+                raise
+    return None
+
+@st.cache_data(ttl=600, show_spinner=False)
 def fetch_ohlcv(code: str, period: str = "1y") -> pd.DataFrame:
     try:
-        df = yf.Ticker(code + ".JK").history(period=period)
-        if df.empty:
+        def _fetch():
+            return yf.Ticker(code + ".JK").history(period=period)
+        df = _retry_fetch(_fetch)
+        if df is None or df.empty:
             return pd.DataFrame()
         df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df.columns = ["open", "high", "low", "close", "volume"]
         return df.dropna()
-    except Exception:
+    except Exception as e:
+        _logger.warning(f"fetch_ohlcv({code}) failed: {e}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=900, show_spinner=False)
 def fetch_info(code: str) -> dict:
     try:
-        return yf.Ticker(code + ".JK").info or {}
+        def _fetch():
+            return yf.Ticker(code + ".JK").info or {}
+        result = _retry_fetch(_fetch)
+        return result if result else {}
     except Exception:
         return {}
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=600, show_spinner=False)
 def fetch_ihsg() -> tuple:
     try:
-        df = yf.Ticker("^JKSE").history(period="5d")
-        if len(df) < 2:
+        def _fetch():
+            return yf.Ticker("^JKSE").history(period="5d")
+        df = _retry_fetch(_fetch)
+        if df is None or len(df) < 2:
             return None, None
         last = float(df["Close"].iloc[-1])
         prev = float(df["Close"].iloc[-2])
@@ -68,11 +99,13 @@ def fetch_ihsg() -> tuple:
     except Exception:
         return None, None
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=900, show_spinner=False)
 def fetch_dividends(code: str) -> pd.DataFrame:
     try:
-        divs = yf.Ticker(code + ".JK").dividends
-        if divs.empty:
+        def _fetch():
+            return yf.Ticker(code + ".JK").dividends
+        divs = _retry_fetch(_fetch)
+        if divs is None or divs.empty:
             return pd.DataFrame()
         df = divs.reset_index()
         df.columns = ["date", "dividend"]

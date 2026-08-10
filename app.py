@@ -7,33 +7,15 @@ sys.path.insert(0, os.path.dirname(__file__))
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
-from pathlib import Path
+
 from utils.analysis import (
     fetch_ihsg, fetch_ohlcv, add_indicators, compute_signal,
     ALL_STOCKS, PREMIUM, MAHASISWA, signal_emoji, signal_color, fmt_rp
 )
 from utils.ui import inject_css, market_status
 
-# ── Google Analytics ──────────────────────────────────────────────────────────
+# ── Google Analytics (safe per-session injection) ─────────────────────────────
 GA_TRACKING_ID = "G-BKLEQBB11T"
-GA_SCRIPT = f"""
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', '{GA_TRACKING_ID}');
-</script>
-"""
-
-index_path = Path(st.__file__).parent / "static" / "index.html"
-try:
-    html_content = index_path.read_text()
-    if GA_TRACKING_ID not in html_content:
-        new_html = html_content.replace("<head>", f"<head>\n{GA_SCRIPT}")
-        index_path.write_text(new_html)
-except Exception:
-    pass  # Silently skip if no write permission
 
 st.set_page_config(
     page_title="StockVision Pro",
@@ -42,6 +24,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 inject_css()
+
+# Inject GA via hidden component (safe for multi-user, no filesystem writes)
+components.html(f"""
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{GA_TRACKING_ID}');
+</script>
+""", height=0)
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
