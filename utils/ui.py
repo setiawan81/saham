@@ -173,8 +173,9 @@ def risk_box(risk: int, atr_pct: float):
     </div>""", unsafe_allow_html=True)
 
 def market_status():
-    from datetime import datetime
-    now = datetime.now()
+    from datetime import datetime, timezone, timedelta
+    WIB = timezone(timedelta(hours=7))
+    now = datetime.now(WIB)
     wd  = now.weekday()  # 0=Mon
     h, m = now.hour, now.minute
     mins = h * 60 + m
