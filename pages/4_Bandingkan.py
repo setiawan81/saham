@@ -74,16 +74,21 @@ st.plotly_chart(fig_cmp, use_container_width=True, config={"displayModeBar": Fal
 # ── SIDE BY SIDE CHARTS ───────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("### 📊 Grafik Individual")
+col_ct, _ = st.columns([1, 3])
+with col_ct:
+    cmp_chart_type = st.radio("Tipe Chart", ["Line", "Candle"], index=0, horizontal=True, label_visibility="collapsed")
+    cmp_chart_type = "candlestick" if cmp_chart_type == "Candle" else "line"
+
 ch_left, ch_right = st.columns(2)
 
 with ch_left:
     st.markdown(f"**{c1}**")
-    fig1 = make_stock_chart(df1, show_rsi=True, show_macd=False)
+    fig1 = make_stock_chart(df1, show_rsi=True, show_macd=False, chart_type=cmp_chart_type)
     st.plotly_chart(fig1, use_container_width=True, config={"displayModeBar": False})
 
 with ch_right:
     st.markdown(f"**{c2}**")
-    fig2 = make_stock_chart(df2, show_rsi=True, show_macd=False)
+    fig2 = make_stock_chart(df2, show_rsi=True, show_macd=False, chart_type=cmp_chart_type)
     st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
 # ── METRICS COMPARISON TABLE ──────────────────────────────────────────────────

@@ -58,6 +58,7 @@ with st.sidebar:
 - **📅 Dividen** — Kalender dividen
 - **📊 Historis Sinyal** — Akurasi sinyal
 - **💼 Portfolio** — Lacak portofolio kamu
+- **🗺️ Heatmap** — Peta performa saham
     """)
     st.markdown("---")
     mkt_msg, is_open = market_status()

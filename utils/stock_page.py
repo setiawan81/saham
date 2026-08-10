@@ -25,11 +25,13 @@ def render_stock_page(stock_dict: dict, page_title: str, page_icon: str):
                           index=2, label_visibility="collapsed")
         period = period_map[tf]
     with col_ind:
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         show_ma20 = c1.checkbox("MA20", True)
         show_ma50 = c2.checkbox("MA50", True)
         show_ema  = c3.checkbox("EMA12", False)
         show_bb   = c4.checkbox("Bollinger", False)
+        chart_type = c5.radio("Chart", ["Line", "Candle"], index=0, label_visibility="collapsed", horizontal=True)
+        chart_type = "candlestick" if chart_type == "Candle" else "line"
 
     c_rsi, c_macd = st.columns(2)
     show_rsi  = c_rsi.checkbox("RSI (14)", True)
@@ -70,7 +72,8 @@ def render_stock_page(stock_dict: dict, page_title: str, page_icon: str):
         fig = make_stock_chart(df,
                                show_ma20=show_ma20, show_ma50=show_ma50,
                                show_ema=show_ema, show_bb=show_bb,
-                               show_rsi=show_rsi, show_macd=show_macd)
+                               show_rsi=show_rsi, show_macd=show_macd,
+                               chart_type=chart_type)
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with an_col:

@@ -48,7 +48,8 @@ def _axis(row=1, side="right"):
 def make_stock_chart(df: pd.DataFrame,
                      show_ma20=True, show_ma50=True,
                      show_ema=False, show_bb=False,
-                     show_rsi=True, show_macd=True) -> go.Figure:
+                     show_rsi=True, show_macd=True,
+                     chart_type="line") -> go.Figure:
 
     n_extra = int(show_rsi) + int(show_macd)
     rows    = 2 + n_extra
@@ -64,12 +65,25 @@ def make_stock_chart(df: pd.DataFrame,
     )
 
     # ── PRICE ──────────────────────────────────────────────
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["close"],
-        fill="tozeroy", fillcolor=C["area"],
-        line=dict(color=C["price"], width=2),
-        name="Harga",
-    ), row=1, col=1)
+    if chart_type == "candlestick":
+        fig.add_trace(go.Candlestick(
+            x=df.index,
+            open=df["open"], high=df["high"],
+            low=df["low"], close=df["close"],
+            increasing_line_color=C["green"],
+            increasing_fillcolor=C["green"],
+            decreasing_line_color=C["red"],
+            decreasing_fillcolor=C["red"],
+            name="OHLC",
+            showlegend=False,
+        ), row=1, col=1)
+    else:
+        fig.add_trace(go.Scatter(
+            x=df.index, y=df["close"],
+            fill="tozeroy", fillcolor=C["area"],
+            line=dict(color=C["price"], width=2),
+            name="Harga",
+        ), row=1, col=1)
 
     if show_ma20 and "ma20" in df:
         fig.add_trace(go.Scatter(x=df.index, y=df["ma20"],
