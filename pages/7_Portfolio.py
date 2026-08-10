@@ -3,8 +3,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import streamlit as st
 import pandas as pd
-import json
-from pathlib import Path
 from utils.analysis import ALL_STOCKS, fetch_ohlcv, add_indicators, compute_signal, signal_emoji
 from utils.charts import make_portfolio_pie
 from utils.ui import inject_css
@@ -15,30 +13,9 @@ inject_css()
 st.markdown("# 💼 Portfolio Tracker")
 st.markdown("Input saham yang kamu pegang, lihat P&L real-time dan rekomendasi.")
 
-# ── PERSISTENCE ───────────────────────────────────────────────────────────────
-_DATA_DIR  = Path(os.path.dirname(os.path.dirname(__file__))) / "data"
-_PORT_FILE = _DATA_DIR / "portfolio.json"
-
-def _load_portfolio() -> list:
-    """Load portfolio from JSON file."""
-    try:
-        if _PORT_FILE.exists():
-            return json.loads(_PORT_FILE.read_text(encoding="utf-8"))
-    except Exception:
-        pass
-    return []
-
-def _save_portfolio(data: list):
-    """Save portfolio to JSON file."""
-    try:
-        _DATA_DIR.mkdir(parents=True, exist_ok=True)
-        _PORT_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception:
-        pass
-
 # ── SESSION STATE ─────────────────────────────────────────────────────────────
 if "portfolio" not in st.session_state:
-    st.session_state.portfolio = _load_portfolio()
+    st.session_state.portfolio = []
 
 # ── ADD POSITION ──────────────────────────────────────────────────────────────
 st.markdown("### ➕ Tambah Posisi")
@@ -68,7 +45,6 @@ with st.form("add_form", clear_on_submit=True):
             "buy_date":  str(buy_date),
             "modal":     buy_price * lots * 100,
         })
-        _save_portfolio(st.session_state.portfolio)
         st.success(f"✅ {code} ditambahkan ke portfolio!")
 
 # ── REMOVE POSITION ───────────────────────────────────────────────────────────
@@ -79,7 +55,6 @@ if st.session_state.portfolio:
         if st.button("Hapus", type="secondary"):
             indices = [remove_labels.index(r) for r in to_remove]
             st.session_state.portfolio = [p for i, p in enumerate(st.session_state.portfolio) if i not in indices]
-            _save_portfolio(st.session_state.portfolio)
             st.rerun()
 
 st.markdown("---")
@@ -207,4 +182,4 @@ for r in rows:
 
 # ── DISCLAIMER ────────────────────────────────────────────────────────────────
 st.markdown("---")
-st.caption("💾 Data portfolio tersimpan otomatis di file lokal. Selalu konsultasikan keputusan investasi dengan pertimbangan matang.")
+st.caption("⚠️ Portfolio tracker ini menyimpan data per sesi. Data akan hilang saat halaman di-refresh. Selalu konsultasikan keputusan investasi dengan pertimbangan matang.")
